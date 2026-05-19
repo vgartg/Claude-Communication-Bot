@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Bootstraps a venv (if missing), installs deps, then launches the API on :3000
+set -euo pipefail
+
+here="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$here"
+
+if [ ! -d ".venv" ]; then
+  python -m venv .venv
+fi
+
+# shellcheck disable=SC1091
+if [ -f ".venv/bin/activate" ]; then
+  source .venv/bin/activate
+else
+  source .venv/Scripts/activate
+fi
+
+python -m pip install --quiet --upgrade pip
+python -m pip install --quiet -e .
+
+export CCB_PORT="${CCB_PORT:-3000}"
+exec python -m claude_comm_bot.main

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Sends a test notification through the running API on :3000.
+# Set CCB_API_TOKEN to your personal token (sent to you by the bot's /start reply).
+set -euo pipefail
+
+base="${CCB_BASE_URL:-http://127.0.0.1:3000}"
+token="${CCB_API_TOKEN:-}"
+
+echo "→ GET  $base/api/health"
+curl -fsS "$base/api/health" && echo
+
+if [ -z "$token" ]; then
+  echo "CCB_API_TOKEN not set — skipping /api/notify. Send /start to the bot in Telegram to get one." >&2
+  exit 0
+fi
+
+echo "→ GET  $base/api/whoami"
+curl -fsS -H "Authorization: Bearer $token" "$base/api/whoami" && echo
+
+echo "→ POST $base/api/notify"
+curl -fsS -X POST "$base/api/notify" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $token" \
+  -d '{"text":"Demo notification from bin/demo","session_id":"demo","kind":"info"}' && echo

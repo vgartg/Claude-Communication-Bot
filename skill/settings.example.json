@@ -1,0 +1,77 @@
+{
+  "env": {
+    "CCB_BASE_URL": "http://127.0.0.1:3000",
+    "CCB_API_TOKEN": "<paste-the-token-/start-gave-you>",
+    "CCB_ASK_HOOK_TIMEOUT": "120"
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/skill/scripts/notify_stop.py",
+              "--kind",
+              "finished"
+            ],
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/skill/scripts/notify_stop.py",
+              "--kind",
+              "error"
+            ],
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/skill/scripts/notify_stop.py",
+              "--kind",
+              "info",
+              "--text",
+              "Session ended"
+            ],
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/skill/scripts/ask_user_question_hook.py"
+            ],
+            "timeout": 130
+          }
+        ]
+      }
+    ]
+  }
+}
