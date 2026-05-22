@@ -16,7 +16,7 @@ import json
 import logging
 import secrets
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class UserRegistry:
                 api_token=secrets.token_urlsafe(TOKEN_BYTES),
                 telegram_username=telegram_username,
                 telegram_full_name=telegram_full_name,
-                created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                created_at=datetime.now(UTC).isoformat(timespec="seconds"),
             )
             self._by_token[user.api_token] = user
             self._by_chat[chat_id] = user
@@ -95,7 +95,7 @@ class UserRegistry:
                 api_token=secrets.token_urlsafe(TOKEN_BYTES),
                 telegram_username=old.telegram_username,
                 telegram_full_name=old.telegram_full_name,
-                created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                created_at=datetime.now(UTC).isoformat(timespec="seconds"),
                 label=old.label,
             )
             self._by_token[new.api_token] = new

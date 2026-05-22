@@ -7,6 +7,7 @@ aren't registered are silently ignored (no info leak).
 
 from __future__ import annotations
 
+import contextlib
 import logging
 from html import escape
 
@@ -195,10 +196,8 @@ def _register_handlers(dp: Dispatcher) -> None:
         if ask is None or (cb.message and ask.chat_id != cb.message.chat.id):
             await cb.answer("This question is no longer waiting.", show_alert=True)
             if cb.message:
-                try:
+                with contextlib.suppress(Exception):
                     await cb.message.edit_reply_markup(reply_markup=None)
-                except Exception:  # noqa: BLE001 — best-effort UI cleanup
-                    pass
             return
 
         if idx < 0 or idx >= len(ask.options):
@@ -209,13 +208,11 @@ def _register_handlers(dp: Dispatcher) -> None:
         if store.resolve_by_id(ask_id, answer, via="button"):
             await cb.answer(f"Sent: {answer}")
             if cb.message:
-                try:
+                with contextlib.suppress(Exception):
                     await cb.message.edit_text(
                         f"{cb.message.html_text}\n\n<b>You answered:</b> {escape(answer)}",
                         reply_markup=None,
                     )
-                except Exception:  # noqa: BLE001
-                    pass
         else:
             await cb.answer("Already answered.", show_alert=True)
 
@@ -237,10 +234,11 @@ def _register_handlers(dp: Dispatcher) -> None:
                 return
 
         # Plain text → oldest pending in THIS chat
-        if store.list_for_chat(message.chat.id):
-            if store.resolve_oldest_for_chat(message.chat.id, text):
-                await message.reply("✅ Answer delivered (oldest pending).")
-                return
+        if store.list_for_chat(message.chat.id) and store.resolve_oldest_for_chat(
+            message.chat.id, text
+        ):
+            await message.reply("✅ Answer delivered (oldest pending).")
+            return
 
         await message.answer(
             "Nothing is waiting for an answer right now. Type /pending to see open questions."
@@ -255,7 +253,7 @@ async def send_notification(
         "finished": "🔔 <b>Agent finished</b>",
         "error":    "⚠️ <b>Agent error</b>",
         "crash":    "💥 <b>Agent crashed</b>",
-        "info":     "ℹ️ <b>Notice</b>",
+        "info":     "ℹ️ <b>Notice</b>",  # noqa: RUF001
     }
     prefix = kinds.get(kind, kinds["info"])
     suffix = f"\n\n<i>session {escape(session_id)}</i>" if session_id else ""

@@ -40,7 +40,7 @@ describe('api client', () => {
     const spy = vi.fn(async () => new Response('{"status":"sent"}', { status: 202 }));
     globalThis.fetch = spy as unknown as typeof fetch;
     await api.notify('abc123', 'hi', 'sess-1');
-    const call = spy.mock.calls[0] as [string, RequestInit];
+    const call = spy.mock.calls[0] as unknown as [string, RequestInit];
     expect(call[0]).toBe('/api/notify');
     const headers = call[1].headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer abc123');

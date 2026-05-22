@@ -32,6 +32,9 @@ Thumbs.db
 .env.*
 !.env.example
 
+# --- Node / web ---
+node_modules/
+
 # --- Logs / runtime ---
 *.log
 *.pid

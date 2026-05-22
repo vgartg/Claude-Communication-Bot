@@ -74,10 +74,8 @@ async def _serve() -> None:
 
 
 def run() -> None:
-    try:
+    with suppress(KeyboardInterrupt):
         asyncio.run(_serve())
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":

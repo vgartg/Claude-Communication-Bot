@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from pathlib import Path
+from typing import Annotated
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
@@ -58,7 +59,7 @@ ROUTE_CATALOG: list[RouteCatalogEntry] = [
 ]
 
 
-def _require_user(authorization: str | None = Header(default=None)) -> User:
+def _require_user(authorization: Annotated[str | None, Header()] = None) -> User:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
     token = authorization.removeprefix("Bearer ").strip()
@@ -82,7 +83,7 @@ async def routes() -> list[RouteCatalogEntry]:
 
 
 @api_router.get("/whoami")
-async def whoami(user: User = Depends(_require_user)) -> dict[str, object]:
+async def whoami(user: Annotated[User, Depends(_require_user)]) -> dict[str, object]:
     return {
         "chat_id": user.chat_id,
         "telegram_username": user.telegram_username,
@@ -92,7 +93,9 @@ async def whoami(user: User = Depends(_require_user)) -> dict[str, object]:
 
 
 @api_router.get("/pending")
-async def pending(user: User = Depends(_require_user)) -> dict[str, list[dict[str, object]]]:
+async def pending(
+    user: Annotated[User, Depends(_require_user)],
+) -> dict[str, list[dict[str, object]]]:
     return {
         "items": [
             {
@@ -110,7 +113,7 @@ async def pending(user: User = Depends(_require_user)) -> dict[str, list[dict[st
 async def notify(
     payload: NotifyRequest,
     request: Request,
-    user: User = Depends(_require_user),
+    user: Annotated[User, Depends(_require_user)],
 ) -> dict[str, str]:
     bot: Bot = request.app.state.bot
     try:
@@ -132,7 +135,7 @@ async def notify(
 async def ask(
     payload: AskRequest,
     request: Request,
-    user: User = Depends(_require_user),
+    user: Annotated[User, Depends(_require_user)],
 ) -> AskResponse:
     settings = get_settings()
     bot: Bot = request.app.state.bot
@@ -163,9 +166,11 @@ async def ask(
             answer, via = await asyncio.wait_for(ask_obj.future, timeout=timeout)
         else:
             answer, via = await ask_obj.future
-    except asyncio.TimeoutError:
+    except TimeoutError:
         store.pop(ask_obj.ask_id)
-        raise HTTPException(status.HTTP_504_GATEWAY_TIMEOUT, "Timed out waiting for reply") from None
+        raise HTTPException(
+            status.HTTP_504_GATEWAY_TIMEOUT, "Timed out waiting for reply"
+        ) from None
     except asyncio.CancelledError:
         store.pop(ask_obj.ask_id)
         raise HTTPException(status.HTTP_409_CONFLICT, "Cancelled") from None

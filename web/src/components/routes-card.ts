@@ -25,15 +25,13 @@ export function routesCard(): HTMLElement {
         .join('');
     })
     .catch(() => {
-      list.innerHTML = '<li class="text-slate-500">Routes unavailable while the API is offline</li>';
+      list.innerHTML =
+        '<li class="text-slate-500">Routes unavailable while the API is offline</li>';
     });
 
   return root;
 }
 
 function escapeHtml(s: string): string {
-  return s
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+  return s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }

@@ -31,7 +31,13 @@ class AskStore:
     pending: dict[str, PendingAsk] = field(default_factory=dict)
     by_chat_msg: dict[tuple[int, int], str] = field(default_factory=dict)
 
-    def create(self, chat_id: int, question: str, options: list[str], session_id: str | None) -> PendingAsk:
+    def create(
+        self,
+        chat_id: int,
+        question: str,
+        options: list[str],
+        session_id: str | None,
+    ) -> PendingAsk:
         loop = asyncio.get_running_loop()
         ask = PendingAsk(
             ask_id=uuid.uuid4().hex[:8],
