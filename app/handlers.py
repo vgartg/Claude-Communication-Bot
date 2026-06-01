@@ -36,62 +36,62 @@ def build_router(settings: Settings, registry: AgentRegistry, store: Store,
     async def start(message: Message) -> None:
         agent = registry.get(await current_agent_id(message.from_user.id))
         await message.answer(
-            f"Connected. Active agent: {agent.name}.\n\n"
-            "Just send a task and I'll work on it. Commands:\n"
-            "/agents - list available agents\n"
-            "/use <id> - switch agent\n"
-            "/new - start a fresh thread for the current agent\n"
-            "/stop - cancel the running task\n"
-            "/whoami - show the active agent"
+            f"Подключено. Активный агент: {agent.name}.\n\n"
+            "Просто напиши задачу — агент сразу начнёт работать. Команды:\n"
+            "/agents — список агентов\n"
+            "/use <id> — переключить агента\n"
+            "/new — начать новый тред для текущего агента\n"
+            "/stop — остановить текущую задачу\n"
+            "/whoami — показать активного агента"
         )
 
     @router.message(Command("agents"), allow)
     async def agents_cmd(message: Message) -> None:
         active = await current_agent_id(message.from_user.id)
         lines = [
-            f"- {a.id}: {a.name}" + (" (active)" if a.id == active else "")
+            f"- {a.id}: {a.name}" + (" (активен)" if a.id == active else "")
             for a in registry.all()
         ]
-        await message.answer("Available agents:\n" + "\n".join(lines))
+        await message.answer("Доступные агенты:\n" + "\n".join(lines))
 
     @router.message(Command("use"), allow)
     async def use_cmd(message: Message) -> None:
         parts = (message.text or "").split(maxsplit=1)
         if len(parts) < 2:
-            await message.answer("Usage: /use <agent-id>. See /agents.")
+            await message.answer("Использование: /use <id>. Смотри /agents.")
             return
         agent_id = parts[1].strip()
         if not registry.get(agent_id):
-            await message.answer(f"Unknown agent '{agent_id}'. See /agents.")
+            await message.answer(f"Агент '{agent_id}' не найден. Смотри /agents.")
             return
         await store.set_active_agent(message.from_user.id, agent_id)
-        await message.answer(f"Switched to {registry.get(agent_id).name}.")
+        await message.answer(f"Переключено на {registry.get(agent_id).name}.")
 
     @router.message(Command("new"), allow)
     async def new_cmd(message: Message) -> None:
         agent_id = await current_agent_id(message.from_user.id)
         await store.clear_session(message.from_user.id, agent_id)
-        await message.answer("Started a fresh thread.")
+        await message.answer("Начат новый тред.")
 
     @router.message(Command("whoami"), allow)
     async def whoami_cmd(message: Message) -> None:
         agent = registry.get(await current_agent_id(message.from_user.id))
-        await message.answer(f"Active agent: {agent.name} ({agent.id}).")
+        await message.answer(f"Активный агент: {agent.name} ({agent.id}).")
 
     @router.message(Command("stop"), allow)
     async def stop_cmd(message: Message) -> None:
         task = busy.get(message.from_user.id)
         if task and not task.done():
             task.cancel()
-            await message.answer("Stopping the current task.")
+            await message.answer("Останавливаю текущую задачу.")
         else:
-            await message.answer("Nothing is running.")
+            await message.answer("Ничего не выполняется.")
 
     @router.message(allow, F.text)
     async def chat(message: Message, bot: Bot) -> None:
         user_id = message.from_user.id
         if user_id in busy and not busy[user_id].done():
-            await message.answer("Still working on the previous task. Send /stop to cancel it.")
+            await message.answer("Ещё работаю над предыдущей задачей. Напиши /stop чтобы отменить.")
             return
         task = asyncio.create_task(_handle_task(message, bot))
         busy[user_id] = task
@@ -119,9 +119,9 @@ def build_router(settings: Settings, registry: AgentRegistry, store: Store,
                     if not produced_text and event.text:
                         await _send(message, event.text)
                 elif event.kind == "error":
-                    await _send(message, f"⚠️ {event.text}")
+                    await _send(message, f"⚠️ Ошибка: {event.text}")
         except asyncio.CancelledError:
-            await message.answer("Task cancelled.")
+            await message.answer("Задача отменена.")
             raise
         finally:
             typing.cancel()
